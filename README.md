@@ -20,9 +20,21 @@ shadcn/ui (Radix primitives, RTL enabled) · lucide-react · date-fns
 
 ```bash
 npm install
-cp .env.example .env.local   # then fill in CLICKUP_TOKEN
-npm run dev                  # http://localhost:3000
+cp .env.example .env.local        # fill in the 3 required values
+openssl rand -hex 32              # -> paste into DASHBOARD_SECRET
+npm run dev
 ```
+
+Then open the app **with the access key** — every route is gated by
+`proxy.ts`, so a bare `http://localhost:3000` returns `401
+مفتاح الوصول غير صحيح`:
+
+```bash
+xdg-open "http://localhost:3000/?k=$(grep -m1 '^DASHBOARD_SECRET=' .env.local | cut -d= -f2)"
+```
+
+Bookmark that URL. The 401 is the gate working, not a misconfiguration — it
+is the same code path that protects the deployed dashboard.
 
 ## Environment variables
 
