@@ -1,5 +1,5 @@
 import { clickUpEnv } from "./env";
-import type { ClickUpListMeta, ClickUpTask, ClickUpTaskPage } from "./types";
+import type { ClickUpTask, ClickUpTaskPage } from "./types";
 
 const API = "https://api.clickup.com/api/v2";
 
@@ -71,10 +71,4 @@ export async function fetchAllTasks(): Promise<ClickUpTask[]> {
   }
 
   throw new Error(`Pagination exceeded ${MAX_PAGES} pages for list ${listId}.`);
-}
-
-/** List metadata, including the live status set. Used by the diagnostics route. */
-export function fetchListMeta(): Promise<ClickUpListMeta> {
-  const { listId } = clickUpEnv();
-  return request<ClickUpListMeta>(`/list/${listId}`);
 }

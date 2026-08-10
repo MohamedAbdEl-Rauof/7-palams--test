@@ -107,6 +107,58 @@ one is a `400`.
 
 Every route, including this one, requires `?k=<DASHBOARD_SECRET>` — see below.
 
+## Deploying to Vercel
+
+**1. Push to GitHub.** `.env.local` is gitignored and no secret exists anywhere
+in the history — verified by scanning every blob in every commit.
+
+```bash
+git remote add origin git@github.com:<you>/noor-dashboard.git
+git push -u origin main
+```
+
+**2. Generate a production secret.** Do not reuse the local one:
+
+```bash
+openssl rand -hex 32
+```
+
+**3. Import the repo at [vercel.com/new](https://vercel.com/new).** Framework
+detection, build command and output directory are all correct by default —
+change nothing.
+
+**4. Set the three required variables** under Settings → Environment Variables,
+for Production (and Preview, if you want preview deploys to work):
+
+| Variable | Value |
+| --- | --- |
+| `CLICKUP_TOKEN` | the same `pk_…` token as `.env.local` |
+| `CLICKUP_LIST_ID` | `901817483700` |
+| `DASHBOARD_SECRET` | the fresh value from step 2 |
+
+`CLICKUP_TEAM_ID` is **not** needed — nothing in the app reads it.
+
+**5. Deploy, then verify** against the live URL:
+
+```bash
+DOMAIN=your-app.vercel.app
+SECRET=<the production secret>
+
+curl -s -o /dev/null -w 'no key   -> %{http_code}\n' "https://$DOMAIN/"
+curl -s -o /dev/null -w 'with key -> %{http_code}\n' "https://$DOMAIN/?k=$SECRET"
+curl -s -D - -o /dev/null "https://$DOMAIN/?k=$SECRET" | grep -i "content-security-policy"
+curl -s "https://$DOMAIN/api/report?k=$SECRET" | jq '.meta'
+```
+
+Expect `401`, `200`, a `frame-ancestors` header naming clickup.com, and a
+`meta` object whose `inRange` matches what you see locally.
+
+**6. Wire the ClickUp card** — see below.
+
+> Vercel runs functions in UTC. That is fine here: day boundaries are computed
+> from a fixed Riyadh offset in `lib/date-range.ts` rather than from the server
+> clock, so the deployed report matches the local one.
+
 ## Embedding in ClickUp
 
 Add a **URL Embed Card** to a ClickUp Dashboard pointing at:
@@ -139,7 +191,9 @@ There is deliberately **no `X-Frame-Options`** header — `DENY` would override
   scoped to one list. It is read only inside `app/api/*` route handlers and must
   never appear in a Client Component or a `NEXT_PUBLIC_*` variable.
 - Any variable prefixed `NEXT_PUBLIC_` is inlined into the client bundle at
-  build time — that prefix is a one-way door. Only `NEXT_PUBLIC_APP_NAME` uses it.
+  build time — that prefix is a one-way door. **No variable in this app uses
+  it**, and none should: every value the dashboard reads is a secret or a
+  server-side id.
 - `.env.local` is gitignored; `.env.example` is deliberately un-ignored via a
   `!.env.example` negation in `.gitignore`.
 - **Embedding:** to be framed by ClickUp the app must send

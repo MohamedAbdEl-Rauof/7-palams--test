@@ -44,8 +44,3 @@ export interface ClickUpTaskPage {
   last_page?: boolean;
 }
 
-export interface ClickUpListMeta {
-  id: string;
-  name: string;
-  statuses: ClickUpStatus[];
-}

@@ -69,7 +69,3 @@ export function classify(status: string): Metric {
   return metric;
 }
 
-/** Statuses this build knows how to bucket — used by the diagnostics route. */
-export function knownStatuses(): string[] {
-  return Object.keys(STATUS_MAP);
-}

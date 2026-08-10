@@ -27,9 +27,14 @@ function required(name: string): string {
 export interface ClickUpEnv {
   token: string;
   listId: string;
-  teamId: string;
 }
 
+/*
+ * CLICKUP_TEAM_ID is deliberately NOT required here. Nothing in the running
+ * app consumes it — the workspace id is only needed for the one-off ID
+ * discovery curls in README.md. Demanding it would turn a forgotten Vercel
+ * variable into a hard 500 on every request in exchange for nothing.
+ */
 export function clickUpEnv(): ClickUpEnv {
   if (typeof window !== "undefined") {
     throw new Error("clickUpEnv() was called on the client — it leaks the token.");
@@ -37,6 +42,5 @@ export function clickUpEnv(): ClickUpEnv {
   return {
     token: required("CLICKUP_TOKEN"),
     listId: required("CLICKUP_LIST_ID"),
-    teamId: required("CLICKUP_TEAM_ID"),
   };
 }
