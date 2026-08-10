@@ -57,17 +57,56 @@ curl -s -H "Authorization: $CLICKUP_TOKEN" \
 `GET /space/{id}/list` returns **folderless lists only** — step 3b is not
 optional if step 3a comes up empty.
 
+Resolved for this workspace (values live in `.env.local`, not here): the
+workspace is **النخيل السبع التجارية**, the space is **المناديب**, and
+**مشهد زيارة** is a folderless list in it — so step 3b was not needed.
+
 ## Business rules
 
-Task status → metric mapping (all 8 custom statuses must map to exactly one):
+Task status → metric mapping. The list defines **five** statuses today
+(verified against `GET /list/{id}`); the mapping in `lib/clickup/status.ts`
+carries three extra entries so that re-adding one in ClickUp does not break the
+dashboard.
 
-| Metric | Statuses |
-| --- | --- |
-| مكتمل (completed) | تمت الزيارة |
-| متبقي (remaining) | ضروري الزيارة · البدء · انتظار التصريح · تحت الدراسة · في انتظار الزيارة |
-| إخفاقات (failures) | لم تتم الزيارة · انتهت ولم تتم الزيارة |
+| Metric | Live statuses | Mapped but not currently on the list |
+| --- | --- | --- |
+| مكتمل (completed) | تمت الزيارة | — |
+| متبقي (remaining) | ضروري الزيارة · انتظار التصريح | البدء · تحت الدراسة · في انتظار الزيارة |
+| إخفاقات (failures) | لم تتم الزيارة · انتهت ولم تتم الزيارة | — |
+
+`classify()` **throws** on a status it does not know rather than defaulting to
+متبقي — a renamed status quietly landing in the wrong bucket would keep the
+invariant satisfied while reporting wrong numbers.
 
 **Invariant:** `total = completed + remaining + failures` for every delegate row.
+
+### Aggregation rules
+
+Settled in Phase 2 against the real list (34 tasks):
+
+- **Date range filters on `due_date`, falling back to `date_created`** when it
+  is unset (8 of 34 tasks). Without the fallback those tasks would be invisible
+  in every report. `meta.datedByFallback` counts how many used it.
+- **A task with several assignees counts in full for each of them.** Seven tasks
+  are co-assigned, so the column totals across rows exceed the task count;
+  `meta.assignments` vs `meta.inRange` makes the gap explicit (43 vs 34 over the
+  full span). Each individual row still satisfies the invariant.
+- **Tasks with no assignee get a `غير مسند` row** rather than being dropped.
+- **`include_closed=true` is mandatory.** Closed tasks are excluded by default
+  and تمت الزيارة is a closed-type status — the list reports `task_count: 26`
+  but returns 34. Omitting it makes مكتمل a hard zero.
+- **Day boundaries resolve in Asia/Riyadh** (fixed UTC+3, no DST), not the
+  server's UTC. See `lib/date-range.ts`.
+- The list has no subtasks, so `subtasks=true` is not sent.
+
+## API
+
+`GET /api/report?from=yyyy-MM-dd&to=yyyy-MM-dd` → `{ rows, meta }`. Both params
+are optional; omitting them reports the current month in Riyadh. Supplying only
+one is a `400`.
+
+> This route is currently **unauthenticated**. The `DASHBOARD_SECRET` gate and
+> the `frame-ancestors` CSP header land in the embedding phase.
 
 ## Security
 
