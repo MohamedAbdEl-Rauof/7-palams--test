@@ -32,6 +32,9 @@ yarn-error.log*
 
 # env files (can opt-in for committing if needed)
 .env*
+# ...but the placeholder template is meant to be committed. Keep this negation
+# BELOW the .env* rule — in .gitignore, the last matching pattern wins.
+!.env.example
 
 # vercel
 .vercel
