@@ -59,6 +59,11 @@ export function parseDayRange(from: string, to: string): DayRange {
   return { startMs, endMs, from, to };
 }
 
+/** Today's calendar date in Riyadh, as yyyy-MM-dd. */
+export function todayInRiyadh(now: number = Date.now()): string {
+  return new Date(now + RIYADH_UTC_OFFSET_MS).toISOString().slice(0, 10);
+}
+
 /** The current month in Riyadh, used when the request omits a range. */
 export function currentMonthRange(now: number = Date.now()): DayRange {
   const riyadh = new Date(now + RIYADH_UTC_OFFSET_MS);

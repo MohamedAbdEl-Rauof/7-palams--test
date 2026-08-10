@@ -34,6 +34,13 @@ export interface ReportMeta {
    * co-assignments, because a shared task credits each assignee.
    */
   assignments: number;
+  /**
+   * Metric counts per *task*, so they sum to `inRange` rather than to
+   * `assignments`. The table reports per-delegate accountability, where a
+   * shared task is counted for each assignee; the summary above it reports how
+   * much work actually exists. Conflating the two would misstate both.
+   */
+  taskMetrics: Record<Metric, number>;
 }
 
 export interface Report {
@@ -75,6 +82,7 @@ export function buildReport(tasks: ClickUpTask[], range: DayRange): Report {
   });
 
   const rows = new Map<string, DelegateRow>();
+  const taskMetrics: Record<Metric, number> = { completed: 0, remaining: 0, failures: 0 };
   let datedByFallback = 0;
   let multiAssigned = 0;
   let unassigned = 0;
@@ -84,6 +92,7 @@ export function buildReport(tasks: ClickUpTask[], range: DayRange): Report {
     if (task.assignees.length > 1) multiAssigned++;
 
     const metric: Metric = classify(task.status.status);
+    taskMetrics[metric]++;
     const targets =
       task.assignees.length > 0
         ? task.assignees.map((a) => ({
@@ -133,6 +142,7 @@ export function buildReport(tasks: ClickUpTask[], range: DayRange): Report {
       multiAssigned,
       unassigned,
       assignments: result.reduce((n, row) => n + row.total, 0),
+      taskMetrics,
     },
   };
 }

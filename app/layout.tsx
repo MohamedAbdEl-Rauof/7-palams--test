@@ -23,7 +23,7 @@ const tajawal = Tajawal({
 });
 
 export const metadata: Metadata = {
-  title: "لوحة نور — تقرير أداء المناديب",
+  title: " تقرير المناديب  — تقرير أداء المناديب",
   description: "تقرير أداء المناديب لشركة النخيل السبع التجارية",
 };
 

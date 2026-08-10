@@ -105,8 +105,33 @@ Settled in Phase 2 against the real list (34 tasks):
 are optional; omitting them reports the current month in Riyadh. Supplying only
 one is a `400`.
 
-> This route is currently **unauthenticated**. The `DASHBOARD_SECRET` gate and
-> the `frame-ancestors` CSP header land in the embedding phase.
+Every route, including this one, requires `?k=<DASHBOARD_SECRET>` — see below.
+
+## Embedding in ClickUp
+
+Add a **URL Embed Card** to a ClickUp Dashboard pointing at:
+
+```
+https://<your-domain>/?k=<DASHBOARD_SECRET>
+```
+
+Append `&from=yyyy-MM-dd&to=yyyy-MM-dd` to pin the card to a fixed period;
+without them it opens on the current month in Riyadh.
+
+The gate lives in `proxy.ts` (Middleware is called **Proxy** as of Next.js 16)
+so a route added later cannot forget it. It fails closed: a missing
+`DASHBOARD_SECRET` denies every request rather than allowing them.
+
+Headers set in `next.config.ts`:
+
+| Header | Value | Why |
+| --- | --- | --- |
+| `Content-Security-Policy` | `frame-ancestors 'self' https://*.clickup.com` | Lets ClickUp frame the app; blocks everyone else. |
+| `Referrer-Policy` | `no-referrer` | Stops `?k=<secret>` leaking to third parties via `Referer`. |
+| `X-Content-Type-Options` | `nosniff` | |
+
+There is deliberately **no `X-Frame-Options`** header — `DENY` would override
+`frame-ancestors` in older browsers and break the embed.
 
 ## Security
 
