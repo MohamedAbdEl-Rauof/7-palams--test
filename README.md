@@ -181,3 +181,4 @@ palette lives in the `@theme inline` block in `app/globals.css`:
 | `--color-warning` | `#EAB308` |
 | `--color-danger` | `#DC2626` |
 | `--background` | `#FAFAFA` |
+# 7-palams--test
